@@ -1,0 +1,35 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+defaultTasks 'clean', 'build'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+project.ext {
+    //App Config
+    appConfigUrl = new URL("file:///${projectDir}/AppConfig.groovy")
+    appConfig = new ConfigSlurper('configuration').parse(appConfigUrl).configuration
+    manifest = project.ext.appConfig.product.distribution.jar.manifest.details
+    project.archivesBaseName = project.ext.appConfig.product.distribution.name
+
+
+    //libs
+
+    //test-libs
+    junit = 'junit:junit:4.8.1'
+    hamcrest = 'org.hamcrest:hamcrest-all:1.3'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'http://code.google.com/p/google-maven-repository'
+    }
+}
+
+
+dependencies {
+    testCompile(project.ext.hamcrest, project.ext.junit)
+}

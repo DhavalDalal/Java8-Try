@@ -1,4 +1,4 @@
-package util;
+package com.tsys.utils;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;

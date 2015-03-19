@@ -1,4 +1,4 @@
-package util;
+package com.tsys.utils;
 
 /**
  * Created by dhavald on 19/03/15.

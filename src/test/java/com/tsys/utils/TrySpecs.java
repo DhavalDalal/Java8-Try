@@ -1,5 +1,6 @@
-package util;
+package com.tsys.utils;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -7,7 +8,6 @@ import java.util.Optional;
 import java.util.Random;
 
 import static org.junit.Assert.*;
-import org.junit.Test;
 
 @RunWith(JUnit4.class)
 public class TrySpecs {
@@ -44,7 +44,6 @@ public class TrySpecs {
 
         //Then
         assertTrue(failure.isFailure());
-        assertFalse(failure.isSuccess());
     }
 
     @Test
@@ -203,7 +202,6 @@ public class TrySpecs {
 
         //Then
         assertTrue(mappedFailure.isFailure());
-        assertFalse(mappedFailure.isSuccess());
     }
 
     @Test
@@ -229,7 +227,6 @@ public class TrySpecs {
         Try<Integer> filtered = success.filter(x -> false);
 
         assertTrue(filtered.isFailure());
-        assertFalse(filtered.isSuccess());
     }
 
     @Test
