@@ -15,8 +15,8 @@ public interface Try<T> {
     public<R> Try<R> flatMap(Function<? super T, Try<R>> fn);
     public void forEach(Consumer<? super T> fn);
     public Try<T> filter(Predicate<? super T> predicate);
-    public<R> Try<R> recover(Function<? super T, R> fn);
-//    public<R> Try<R> recoverWith(Function<? super T, Try<R>> fn);
+    public<R> Try<R> recover(Function<Throwable, R> fn);
+    public<R> Try<R> recoverWith(Function<Throwable, Try<R>> fn);
 
     default Optional<T> toOptional() {
         if (isSuccess()) {

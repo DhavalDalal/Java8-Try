@@ -1,13 +1,37 @@
 package com.tsys.utils;
 
-import java.awt.*;
 import java.sql.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TryInCollectionExamples {
+
+    private static final Random random = new Random();
+
+    static void printCapitalized(String s) throws Exception {
+        if (null == s)
+            throw new Exception("null");
+
+        System.out.println(s.toUpperCase());
+
+    }
+
+    static String generate() throws Exception {
+        if(random.nextInt(3) == 0)
+            throw new Exception("Could Not Generate String");
+
+        final StringBuilder name = random.ints(97, 122)
+                .limit(random.nextInt(10))
+                .mapToObj(c -> Character.valueOf((char) c))
+                .filter(Character::isAlphabetic)
+                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append);
+
+        return name.toString();
+    }
+
+
     public static void main(String[] args) throws Exception {
         //Example: FunctionThrowingException, map
         List<Try<String>> mapped = Arrays.asList("Hello", null, "dance").stream()
@@ -23,10 +47,10 @@ public class TryInCollectionExamples {
 
         //Example: ConsumerThrowingException
         Arrays.asList("Hello", null, "dance").stream()
-                .forEach(s -> Try.with(TrySpecsUtil::printCapitalized, s));
+                .forEach(s -> Try.with(TryInCollectionExamples::printCapitalized, s));
 
         //Example: SupplierThrowingException
-        final List<Try<String>> strings = Stream.generate(() -> Try.with(() -> TrySpecsUtil.generate()))
+        final List<Try<String>> strings = Stream.generate(() -> Try.with(() -> TryInCollectionExamples.generate()))
                 .filter(t -> t instanceof Success)
                 .limit(3)
                 .collect(Collectors.toList());
@@ -61,8 +85,7 @@ public class TryInCollectionExamples {
 
         FunctionThrowsException<ResultSet, Event, SQLException> toEvent = r -> {
             String type = r.getString(1);
-            String text = r.getString(2);
-            return new Event(type, text);
+            return new Event(type);
         };
 
         Try<Try<Try<Try<Event>>>> event = resultSet.map(c -> c.map(s -> s.map(r -> Try.with(toEvent, r))));
@@ -85,20 +108,3 @@ public class TryInCollectionExamples {
 }
 
 
-class Event {
-    private final String type;
-    private final String text;
-
-    Event(String type, String text) {
-        this.type = type;
-        this.text = text;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getText() {
-        return text;
-    }
-}

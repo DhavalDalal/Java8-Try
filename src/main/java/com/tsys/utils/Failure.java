@@ -1,5 +1,6 @@
 package com.tsys.utils;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -29,9 +30,20 @@ public class Failure<T extends Throwable> implements Try<T> {
     }
 
     @Override
-    public <R> Try<R> recover(Function<? super T, R> fn) {
+    public <R> Try<R> recover(Function<Throwable, R> fn) {
+        Objects.requireNonNull(fn);
         try {
             return new Success<>(fn.apply(throwable));
+        } catch (Throwable t) {
+            return new Failure(t);
+        }
+    }
+
+    @Override
+    public<R> Try<R> recoverWith(Function<Throwable, Try<R>> fn) {
+        Objects.requireNonNull(fn);
+        try {
+            return fn.apply(throwable);
         } catch (Throwable t) {
             return new Failure(t);
         }

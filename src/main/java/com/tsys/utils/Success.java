@@ -23,7 +23,10 @@ public class Success<T> implements Try<T> {
     public T get() { return value; }
 
     @Override
-    public void forEach(Consumer<? super T> fn) { fn.accept(value); }
+    public void forEach(Consumer<? super T> fn) {
+        Objects.requireNonNull(fn);
+        fn.accept(value);
+    }
 
     @Override
     public Try<T> filter(Predicate<? super T> predicate) {
@@ -39,7 +42,12 @@ public class Success<T> implements Try<T> {
     }
 
     @Override
-    public <R> Try<R> recover(Function<? super T, R> fn) {
+    public<R> Try<R> recover(Function<Throwable, R> fn) {
+        return (Try<R>) this;
+    }
+
+    @Override
+    public<R> Try<R> recoverWith(Function<Throwable, Try<R>> fn) {
         return (Try<R>) this;
     }
 

@@ -1,5 +1,6 @@
 package com.tsys.utils;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -90,8 +91,15 @@ public class TrySpecs {
     @Test
     public void successCreatedFromConsumerThrowingException() {
         //Given
-        String value = "Hello";
-        ConsumerThrowsException<String, Exception> cte = s -> TrySpecsUtil.printCapitalized(s);
+        final String value = "Hello";
+        final StringBuilder result = new StringBuilder();
+        ConsumerThrowsException<String, Exception> cte =
+            s -> {
+                if (null == s)
+                    throw new Exception("null received");
+
+                result.append(s);
+            };
 
         //When
         Try<Void> success = Try.with(cte, value);
@@ -99,18 +107,36 @@ public class TrySpecs {
         //Then
         assertTrue(success.isSuccess());
         assertFalse(success.isFailure());
+        assertEquals(value, result.toString());
     }
 
     @Test
-    public void retrievesSuccessValueFromConsumerThrowingException() {
+    public void retrievesNoSuccessValueFromConsumerThrowingException() {
         //Given
-        ConsumerThrowsException<String, Exception> cte = s -> TrySpecsUtil.printCapitalized(s);
+        ConsumerThrowsException<String, Exception> cte =
+                s -> {
+                    if (null == s)
+                        throw new Exception("null received");
+                };
 
         //When
         Try<Void> success = Try.with(cte, "Hello");
 
         //Then
         assertEquals(null, success.get());
+    }
+
+    @Test
+    public void failureCreatedWhenConsumerThrowsException() {
+        //Given
+        ConsumerThrowsException<String, Exception> cte =
+                s -> { throw new Exception("on purpose"); };
+
+        //When
+        Try<Void> failure = Try.with(cte, "Hello");
+
+        //Then
+        assertTrue(failure.isFailure());
     }
 
     @Test
@@ -138,6 +164,19 @@ public class TrySpecs {
 
         //Then
         assertEquals(value, success.get());
+    }
+
+    @Test
+    public void failureCreatedWhenPredicateThrowsException() {
+        //Given
+        PredicateThrowsException<String, Exception> pte =
+                s -> { throw new Exception("on purpose"); };
+
+        //When
+        Try<String> failure = Try.with(pte, "Hello");
+
+        //Then
+        assertTrue(failure.isFailure());
     }
 
     @Test
@@ -332,14 +371,15 @@ public class TrySpecs {
     @Test
     public void recoversFromFailure() {
         //Given
-        Try<Double> failure = Try.with(() -> 0d / 0);
+        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
 
         //When
-        Try<Double> recovered = failure.recover(t -> Double.NaN);
+        String value = "";
+        Try<String> recovered = failure.recover(t -> value);
 
         //Then
         assertTrue(recovered.isSuccess());
-        assertEquals(Double.NaN, recovered.get(), 0);
+        assertEquals(value, recovered.get());
     }
 
     @Test
@@ -355,69 +395,32 @@ public class TrySpecs {
         assertSame(success, success2);
     }
 
-}
+    @Test
+    public void flattenedRecoveryFromFailure() {
+        //Given
+        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
+        assertTrue(failure.isFailure());
 
-class TrySpecsUtil {
-    private static final Random random = new Random();
+        //When
+        String value = "";
+        Try<String> flattenedRecovery = failure.recoverWith(t -> Try.with(() -> value));
 
-    static String methodAlwaysThrows() throws Exception {
-        throw new Exception("failure");
+        //Then
+        assertTrue(flattenedRecovery.isSuccess());
+        assertEquals(value, flattenedRecovery.get());
     }
 
-    static String tryCapitalize(Throwable t) {
-        if (t instanceof IllegalArgumentException) {
-            return "";
-        }
-        return "";
-    }
+    @Test
+    public void successDoesNotRecoverAfterFlattening() {
+        //Given
+        Try<Double> success = Try.with(() -> 8d / 3);
 
-    static String capitalize(String s) throws Exception {
-        if (null == s)
-            throw new Exception("null");
+        //When
+        Try<Double> success2 = success.recoverWith(t -> Try.with(() -> Double.NaN));
 
-        return s.toUpperCase();
-    }
-
-    static Try<String> prefixCapitalize(String prefix, String s) {
-        if(null == prefix)
-            throw new IllegalArgumentException("null prefix");
-
-        return Try.with(() -> prefix + capitalize(s));
-    }
-
-    static int length(String s) {
-        if (null == s)
-            throw new IllegalArgumentException("null string");
-
-        return s.length();
-    }
-
-
-    static void printCapitalized(String s) throws Exception {
-        if (null == s)
-            throw new Exception("null");
-
-        System.out.println(s.toUpperCase());
-
-    }
-
-    static boolean gte5(String s) throws Exception {
-        if (null == s)
-            throw new Exception("null");
-
-        return s.length() < 5 ? false : true;
-    }
-
-    static String generate() throws Exception {
-        if(random.nextInt(3) == 0)
-            throw new Exception("Could Not Generate String");
-
-        final StringBuilder name = random.ints(97, 122)
-                .limit(random.nextInt(10))
-                .mapToObj(c -> Character.valueOf((char) c))
-                .filter(Character::isAlphabetic)
-                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append);
-
-        return name.toString();
+        //Then
+        assertTrue(success2.isSuccess());
+        assertSame(success, success2);
     }
 }
+
