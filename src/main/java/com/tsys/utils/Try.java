@@ -66,8 +66,11 @@ public interface Try<T> {
             return new Failure(e);
         }
     }
+
+    static<T, U, R, E extends Throwable> Try<R> with(BiFunctionThrowsException<T, U, R, E> bfte, T t, U u) {
+        Objects.requireNonNull(bfte);
+        try { return new Success<>(bfte.apply(t, u)); }
+        catch(Throwable e) { return new Failure(e); }
+    }
+
 }
-
-
-
-

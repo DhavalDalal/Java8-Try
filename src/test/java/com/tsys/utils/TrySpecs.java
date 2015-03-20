@@ -179,26 +179,23 @@ public class TrySpecs {
     @Test
     public void successMapsToFailure() {
         //Given
-        String value = "Hello";
-        FunctionThrowsException<String, String, Exception> fte = s -> TrySpecsUtil.capitalize(s);
-        Try<String> success = Try.with(fte, value);
+        Try<String> success = Try.with(() -> null);
 
         //When
-        Try<Integer> mappedFailure = success.map(s -> TrySpecsUtil.length(null));
+        Try<Integer> mappedFailure = success.map(TrySpecsUtil::length);
 
         //Then
         assertTrue(mappedFailure.isFailure());
-        assertFalse(mappedFailure.isSuccess());
     }
 
     @Test
     public void failureMapsToFailure() {
         //Given
-        FunctionThrowsException<String, String, Exception> fte = s -> TrySpecsUtil.capitalize(null);
-        Try<String> failure = Try.with(fte, "Hello");
+        String nothing = null;
+        Try<Integer> failure = Try.with(() -> nothing.length());
 
         //When
-        Try<Integer> mappedFailure = failure.map(s -> TrySpecsUtil.length(null));
+        Try<Integer> mappedFailure = failure.map(len -> len * 2);
 
         //Then
         assertTrue(mappedFailure.isFailure());
@@ -207,8 +204,7 @@ public class TrySpecs {
     @Test
     public void filtersSuccessWhenPredicateHolds() {
         //Given
-        Integer value = 2;
-        Try<Integer> success = Try.with(() -> value);
+        Try<Integer> success = Try.with(() -> 2);
 
         //When
         Try<Integer> filtered = success.filter(x -> true);
@@ -220,8 +216,7 @@ public class TrySpecs {
     @Test
     public void successConvertsToFailureWhenPredicateDoesNotHold() {
         //Given
-        Integer value = 2;
-        Try<Integer> success = Try.with(() -> value);
+        Try<Integer> success = Try.with(() -> 2);
 
         //When
         Try<Integer> filtered = success.filter(x -> false);
@@ -246,8 +241,7 @@ public class TrySpecs {
     public void successFlattensToSuccess() {
         //Given
         String value = "Hello";
-        FunctionThrowsException<String, String, Exception> fte = s -> TrySpecsUtil.capitalize(s);
-        Try<String> success = Try.with(fte, value);
+        Try<String> success = Try.with(() -> value);
 
         //When
         final String prefix = "=> ";
@@ -260,9 +254,7 @@ public class TrySpecs {
     @Test
     public void successFlattensToFailure() {
         //Given
-        String value = "Hello";
-        FunctionThrowsException<String, String, Exception> fte = s -> TrySpecsUtil.capitalize(s);
-        Try<String> success = Try.with(fte, value);
+        Try<String> success = Try.with(() -> "Hello");
 
         //When
         final String prefix = null;
@@ -292,7 +284,6 @@ public class TrySpecs {
 
         //When
         StringBuilder result = new StringBuilder();
-
         success.forEach(s -> result.append(s));
 
         //Then
