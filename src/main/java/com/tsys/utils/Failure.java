@@ -11,20 +11,43 @@ public class Failure<T extends Throwable> implements Try<T> {
         this.throwable = throwable;
     }
 
+    @Override
     public boolean isSuccess() { return false; }
+
+    @Override
     public boolean isFailure() { return true;  }
+
+    @Override
     public T get() { throw new RuntimeException(throwable); }
-    public void forEach(Consumer<T> fn) { }
-    public Try<T> filter(Predicate<T> predicate) {
+
+    @Override
+    public void forEach(Consumer<? super T> fn) { }
+
+    @Override
+    public Try<T> filter(Predicate<? super T> predicate) {
         return this;
     }
-    public<R> Try<R> map(Function<T, R> mapper) {
-        return (Try<R>) this;
+
+    @Override
+    public <R> Try<R> recover(Function<? super T, R> fn) {
+        try {
+            return new Success<>(fn.apply(throwable));
+        } catch (Throwable t) {
+            return new Failure(t);
+        }
     }
-    public <R> Try<R> flatMap(Function<T, Try<R>> fn) {
+
+    @Override
+    public<R> Try<R> map(Function<? super T, ? extends R> mapper) {
         return (Try<R>) this;
     }
 
+    @Override
+    public <R> Try<R> flatMap(Function<? super T, Try<R>> fn) {
+        return (Try<R>) this;
+    }
+
+    @Override
     public String toString() {
         return String.format("Failure(%s)", throwable.toString());
     }

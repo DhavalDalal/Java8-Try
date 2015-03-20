@@ -323,11 +323,38 @@ public class TrySpecs {
         Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
 
         //When
-        final Optional<String> optional = failure.toOptional();
+        Optional<String> optional = failure.toOptional();
 
         //Then
         assertFalse(optional.isPresent());
     }
+
+    @Test
+    public void recoversFromFailure() {
+        //Given
+        Try<Double> failure = Try.with(() -> 0d / 0);
+
+        //When
+        Try<Double> recovered = failure.recover(t -> Double.NaN);
+
+        //Then
+        assertTrue(recovered.isSuccess());
+        assertEquals(Double.NaN, recovered.get(), 0);
+    }
+
+    @Test
+    public void successDoesNotRecover() {
+        //Given
+        Try<Double> success = Try.with(() -> 8d / 3);
+
+        //When
+        Try<Double> success2 = success.recover(t -> Double.NaN);
+
+        //Then
+        assertTrue(success2.isSuccess());
+        assertSame(success, success2);
+    }
+
 }
 
 class TrySpecsUtil {
@@ -335,6 +362,13 @@ class TrySpecsUtil {
 
     static String methodAlwaysThrows() throws Exception {
         throw new Exception("failure");
+    }
+
+    static String tryCapitalize(Throwable t) {
+        if (t instanceof IllegalArgumentException) {
+            return "";
+        }
+        return "";
     }
 
     static String capitalize(String s) throws Exception {

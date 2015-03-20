@@ -11,10 +11,12 @@ public interface Try<T> {
     public boolean isSuccess();
     public boolean isFailure();
     public T get();
-    public<R> Try<R> map(Function<T, R> fn);
-    public<R> Try<R> flatMap(Function<T, Try<R>> fn);
-    public void forEach(Consumer<T> fn);
-    public Try<T> filter(Predicate<T> predicate);
+    public<R> Try<R> map(Function<? super T, ? extends R> fn);
+    public<R> Try<R> flatMap(Function<? super T, Try<R>> fn);
+    public void forEach(Consumer<? super T> fn);
+    public Try<T> filter(Predicate<? super T> predicate);
+    public<R> Try<R> recover(Function<? super T, R> fn);
+//    public<R> Try<R> recoverWith(Function<? super T, Try<R>> fn);
 
     default Optional<T> toOptional() {
         if (isSuccess()) {

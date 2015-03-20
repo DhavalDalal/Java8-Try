@@ -12,12 +12,21 @@ public class Success<T> implements Try<T> {
     public Success(final T value) {
         this.value = value;
     }
-    public boolean isSuccess() { return true;  }
-    public boolean isFailure() { return false; }
-    public T get() { return value; }
-    public void forEach(Consumer<T> fn) { fn.accept(value); }
 
-    public Try<T> filter(Predicate<T> predicate) {
+    @Override
+    public boolean isSuccess() { return true;  }
+
+    @Override
+    public boolean isFailure() { return false; }
+
+    @Override
+    public T get() { return value; }
+
+    @Override
+    public void forEach(Consumer<? super T> fn) { fn.accept(value); }
+
+    @Override
+    public Try<T> filter(Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate);
         try {
             if (predicate.test(value))
@@ -29,18 +38,26 @@ public class Success<T> implements Try<T> {
         }
     }
 
-    public <R> Try<R> map(Function<T, R> mapper) {
+    @Override
+    public <R> Try<R> recover(Function<? super T, R> fn) {
+        return (Try<R>) this;
+    }
+
+    @Override
+    public <R> Try<R> map(Function<? super T, ? extends R> mapper) {
         Objects.requireNonNull(mapper);
         try { return new Success<>(mapper.apply(value)); }
         catch (Throwable t) { return new Failure(t); }
     }
 
-    public <R> Try<R> flatMap(Function<T, Try<R>> mapper) {
+    @Override
+    public <R> Try<R> flatMap(Function<? super T, Try<R>> mapper) {
         Objects.requireNonNull(mapper);
         try { return mapper.apply(value); }
         catch(Throwable t) { return new Failure(t); }
     }
 
+    @Override
     public String toString() {
         return String.format("Success(%s)", value);
     }
