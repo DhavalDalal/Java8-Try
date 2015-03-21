@@ -20,6 +20,10 @@ project.ext {
     //test-libs
     junit = 'junit:junit:4.8.1'
     hamcrest = 'org.hamcrest:hamcrest-all:1.3'
+
+    //examples
+    examplesSrcDir = "$projectDir/src/examples/java"
+//    mainSrcDir = "$projectDir/src/main/java"
 }
 
 repositories {
@@ -32,4 +36,13 @@ repositories {
 
 dependencies {
     testCompile(project.ext.hamcrest, project.ext.junit)
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDir "$examplesSrcDir"
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package com.tsys.utils;
+package examples;
 
 import java.util.List;
 import java.util.Random;

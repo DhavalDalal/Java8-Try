@@ -1,14 +1,32 @@
-package com.tsys.utils;
+package examples;
+
+import com.tsys.utils.*;
 
 import java.sql.*;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TryInCollectionExamples {
 
     private static final Random random = new Random();
+
+    static String capitalize(String s) throws Exception {
+        if (null == s)
+            throw new Exception("null");
+
+        return s.toUpperCase();
+    }
+
+    static Try<String> prefixCapitalize(String prefix, String s) {
+        if(null == prefix)
+            throw new IllegalArgumentException("null prefix");
+
+        return Try.with(() -> prefix + capitalize(s));
+    }
+
 
     static void printCapitalized(String s) throws Exception {
         if (null == s)
@@ -35,13 +53,13 @@ public class TryInCollectionExamples {
     public static void main(String[] args) throws Exception {
         //Example: FunctionThrowingException, map
         List<Try<String>> mapped = Arrays.asList("Hello", null, "dance").stream()
-                .map(s -> Try.with((FunctionThrowsException<String, String, Exception>) TrySpecsUtil::capitalize, s))
+                .map(s -> Try.with((FunctionThrowsException<String, String, Exception>) TryInCollectionExamples::capitalize, s))
                 .collect(Collectors.toList());
         System.out.println("mapped = " + mapped);
 
         //Example: FunctionThrowingException encapsulated in Try, map
         List<Try<String>> mapEncapsulated = Arrays.asList("Hello", null, "dance").stream()
-                .map(s -> TrySpecsUtil.prefixCapitalize("--> ", s))
+                .map(s -> TryInCollectionExamples.prefixCapitalize("--> ", s))
                 .collect(Collectors.toList());
         System.out.println("mapEncapsulated = " + mapEncapsulated);
 

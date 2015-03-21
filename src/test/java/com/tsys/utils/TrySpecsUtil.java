@@ -1,11 +1,8 @@
 package com.tsys.utils;
 
-/**
- * Created by dhavald on 21/03/15.
- */
-class TrySpecsUtil {
+public class TrySpecsUtil {
 
-    static String methodAlwaysThrows() throws Exception {
+    public static String methodAlwaysThrows() throws Exception {
         throw new Exception("failure");
     }
 
@@ -23,7 +20,7 @@ class TrySpecsUtil {
         return Try.with(() -> prefix + capitalize(s));
     }
 
-    static int length(String s) {
+    public static int length(String s) {
         if (null == s)
             throw new IllegalArgumentException("null string");
 
@@ -31,7 +28,7 @@ class TrySpecsUtil {
     }
 
 
-    static boolean gte5(String s) throws Exception {
+    public static boolean gte5(String s) throws Exception {
         if (null == s)
             throw new Exception("null");
 

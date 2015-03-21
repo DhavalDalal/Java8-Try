@@ -26,19 +26,19 @@ public interface Try<T> {
         }
     }
 
-    static<T, R, E extends Throwable> Try<R> with(FunctionThrowsException<T, R, E> fte, T t) {
+    public static<T, R, E extends Throwable> Try<R> with(FunctionThrowsException<T, R, E> fte, T t) {
         Objects.requireNonNull(fte);
         try { return new Success<>(fte.apply(t)); }
         catch(Throwable e) { return new Failure(e); }
     }
 
-    static<T, E extends Throwable> Try<T> with(SupplierThrowsException<T, E> ste) {
+    public static<T, E extends Throwable> Try<T> with(SupplierThrowsException<T, E> ste) {
         Objects.requireNonNull(ste);
         try { return new Success<>(ste.get()); }
         catch(Throwable e) { return new Failure(e); }
     }
 
-    static<T, E extends Throwable> Try<T> with(PredicateThrowsException<T, E> pte, T t) {
+    public static<T, E extends Throwable> Try<T> with(PredicateThrowsException<T, E> pte, T t) {
         Objects.requireNonNull(pte);
         try {
             return pte.test(t) ? new Success<>(t)
@@ -48,7 +48,7 @@ public interface Try<T> {
         }
     }
 
-    static<T, E extends Throwable> Predicate<T> with(PredicateThrowsException<T, E> pte) {
+    public static<T, E extends Throwable> Predicate<T> with(PredicateThrowsException<T, E> pte) {
         Objects.requireNonNull(pte);
         return t -> {
             try {
@@ -59,7 +59,7 @@ public interface Try<T> {
         };
     }
 
-    static<T, E extends Throwable> Try<Void> with(ConsumerThrowsException<T, E> cte, T t) {
+    public static<T, E extends Throwable> Try<Void> with(ConsumerThrowsException<T, E> cte, T t) {
         Objects.requireNonNull(cte);
         try {
             cte.accept(t);
@@ -69,7 +69,7 @@ public interface Try<T> {
         }
     }
 
-    static<T, U, R, E extends Throwable> Try<R> with(BiFunctionThrowsException<T, U, R, E> bfte, T t, U u) {
+    public static<T, U, R, E extends Throwable> Try<R> with(BiFunctionThrowsException<T, U, R, E> bfte, T t, U u) {
         Objects.requireNonNull(bfte);
         try { return new Success<>(bfte.apply(t, u)); }
         catch(Throwable e) { return new Failure(e); }

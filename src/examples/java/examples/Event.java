@@ -1,4 +1,4 @@
-package com.tsys.utils;
+package examples;
 
 public class Event {
     private final String type;

@@ -24,3 +24,6 @@ Please refer to `AppConfig.groovy` - a single place of change for all the projec
 ## License
 **This software is licensed under the terms of the [FreeBSD License](http://en.wikipedia.org/wiki/BSD_licenses)**
 
+## Using Try<T>
+
+Please refer to the following presentation.
