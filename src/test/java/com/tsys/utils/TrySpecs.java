@@ -5,8 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.DoubleSummaryStatistics;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Function;
 
 import static org.junit.Assert.*;
 
@@ -421,6 +423,101 @@ public class TrySpecs {
         //Then
         assertTrue(success2.isSuccess());
         assertSame(success, success2);
+    }
+
+    @Test
+    public void failsASuccess() {
+        //Given
+        Try<Double> success = Try.with(() -> 8d / 3);
+
+        //When
+        Try<Double> failed = success.failed();
+
+        //Then
+        assertTrue(failed.isFailure());
+    }
+
+    @Test
+    public void succeedsAFailure() {
+        //Given
+        Try<Integer> failure = Try.with(() -> 2 / 0);
+
+        //When
+        Try<Integer> success = failure.failed();
+
+        //Then
+        assertTrue(success.isSuccess());
+    }
+
+    @Test
+    public void transformsASuccess() {
+        //Given
+        Try<Integer> success = Try.with(() -> 8 / 2);
+
+        Function<Integer, Try<Double>> successFn = x -> Try.with(() -> x * 2.0);
+
+        Function<Throwable, Try<Double>> failureFn = t -> Try.with(() -> Double.NaN);
+
+        //When
+        Try<Double> transformed = success.transform(successFn, failureFn);
+
+        //Then
+        assertEquals(8.0d, transformed.get(), 0.0001);
+    }
+
+    @Test
+    public void transformsAFailure() {
+        //Given
+        Try<Integer> failure = Try.with(() -> 2 / 0);
+
+        Function<Integer, Try<Double>> successFn = x -> Try.with(() -> x * 2.0);
+
+        Function<Throwable, Try<Double>> failureFn = t -> Try.with(() -> Double.NaN);
+
+        //When
+        Try<Double> transformed = failure.transform(successFn, failureFn);
+
+        //Then
+        assertEquals(Double.NaN, transformed.get(), 0.0);
+    }
+
+    @Test
+    public void failureDefaultsToAValue() {
+        //Given
+        Try<Integer> failure = Try.with(() -> 2 / 0);
+
+        //When
+        final int defaultValue = 2;
+        int value = failure.getOrElse(defaultValue);
+
+        //Then
+        assertEquals(defaultValue, value);
+    }
+
+    @Test
+    public void successDoesNotDefaultToAValue() {
+        //Given
+        Try<Integer> success = Try.with(() -> 2 / 2);
+
+        //When
+        final int defaultValue = 2;
+        int value = success.getOrElse(defaultValue);
+
+        //Then
+        assertEquals(1, value);
+    }
+
+
+    @Test
+    public void failureDefaultsToAnotherTry() {
+        //Given
+        Try<Integer> failure = Try.with(() -> 2 / 0);
+
+        //When
+        Try<Integer> defaultValue = failure.orElse(Try.with(() -> 2 / 1));
+
+        //Then
+        assertEquals(2, defaultValue.get().intValue());
     }
 }
 

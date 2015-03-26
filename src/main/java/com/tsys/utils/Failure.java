@@ -50,6 +50,20 @@ public class Failure<T extends Throwable> implements Try<T> {
     }
 
     @Override
+    public <R> Try<R> transform(Function<T, Try<R>> successFn, Function<Throwable, Try<R>> failureFn) {
+        try {
+            return failureFn.apply(throwable);
+        } catch (Throwable t) {
+            return new Failure(t);
+        }
+    }
+
+    @Override
+    public Try<T> failed() {
+        return new Success(throwable);
+    }
+
+    @Override
     public<R> Try<R> map(Function<? super T, ? extends R> mapper) {
         return (Try<R>) this;
     }

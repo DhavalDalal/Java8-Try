@@ -4,6 +4,7 @@ import com.tsys.utils.Try;
 
 public class RecoveryExamples {
     public static void main(String[] args) {
+        Try.with(() -> {throw new RuntimeException(); });
         final Try<Integer> answer = Try.with(() -> 2 / 0)
                 .recover(t -> 2)
                 .map(x -> {
@@ -28,10 +29,10 @@ public class RecoveryExamples {
 
         //Chain of Responsibility using recover/recoverWith
         final Try<Double> answer4 =
-                Try.with(() -> 2 / 0) //Success(10.0)
-//                Try.with(() -> { throw new NullPointerException(); }) //Success(4)
+//                Try.with(() -> 2 / 0) //Success(10.0)
+                Try.with(() -> Integer.valueOf(null)) //Success(4)
                 .recover(t -> {
-                    if (t.getClass() == NullPointerException.class) {
+                    if (t.getClass() == NumberFormatException.class) {
                         return 2;
                     }
                     throw new RuntimeException(t);

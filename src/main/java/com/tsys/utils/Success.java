@@ -52,6 +52,20 @@ public class Success<T> implements Try<T> {
     }
 
     @Override
+    public <R> Try<R> transform(Function<T, Try<R>> successFn, Function<Throwable, Try<R>> failureFn) {
+        try {
+            return successFn.apply(value);
+        } catch (Throwable t) {
+            return new Failure(t);
+        }
+    }
+
+    @Override
+    public Try<T> failed() {
+        return new Failure(new UnsupportedOperationException("Success failed"));
+    }
+
+    @Override
     public <R> Try<R> map(Function<? super T, ? extends R> mapper) {
         Objects.requireNonNull(mapper);
         try { return new Success<>(mapper.apply(value)); }
