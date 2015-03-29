@@ -6,6 +6,7 @@ import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,7 @@ public class TryInCollectionExamples {
         if(null == prefix)
             throw new IllegalArgumentException("null prefix");
 
-        return Try.with(() -> prefix + capitalize(s));
+        return Try.with((SupplierThrowsException<String, Exception>) () -> prefix + capitalize(s));
     }
 
 
@@ -64,11 +65,13 @@ public class TryInCollectionExamples {
         System.out.println("mapEncapsulated = " + mapEncapsulated);
 
         //Example: ConsumerThrowingException
+        ConsumerThrowsException<String, Exception> printCapitalized = TryInCollectionExamples::printCapitalized;
         Arrays.asList("Hello", null, "dance").stream()
-                .forEach(s -> Try.with(TryInCollectionExamples::printCapitalized, s));
+                .forEach(s -> Try.with(printCapitalized, s));
 
         //Example: SupplierThrowingException
-        final List<Try<String>> strings = Stream.generate(() -> Try.with(() -> TryInCollectionExamples.generate()))
+        SupplierThrowsException<String, Exception> generator = () -> TryInCollectionExamples.generate();
+        final List<Try<String>> strings = Stream.generate(() -> Try.with(generator))
                 .filter(t -> t instanceof Success)
                 .limit(3)
                 .collect(Collectors.toList());

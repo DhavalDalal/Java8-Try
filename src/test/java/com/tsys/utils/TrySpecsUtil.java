@@ -17,16 +17,8 @@ public class TrySpecsUtil {
         if(null == prefix)
             throw new IllegalArgumentException("null prefix");
 
-        return Try.with(() -> prefix + capitalize(s));
+        return Try.with((SupplierThrowsException<String, Exception>) () -> prefix + capitalize(s));
     }
-
-    public static int length(String s) {
-        if (null == s)
-            throw new IllegalArgumentException("null string");
-
-        return s.length();
-    }
-
 
     public static boolean gte5(String s) throws Exception {
         if (null == s)

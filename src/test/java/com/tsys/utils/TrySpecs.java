@@ -1,27 +1,29 @@
 package com.tsys.utils;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.DoubleSummaryStatistics;
 import java.util.Optional;
-import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class TrySpecs {
+    
+    private static Supplier<Integer> divisionByZero = () -> 2 / 0;
 
     @Test
-    public void successCreatedFromSupplierThrowingException() {
+    public void successCreatedFromSupplierThrowingCheckedException() {
         //Given
-        Integer value = 2;
+        SupplierThrowsException<Integer, Exception> ste = () -> 2;
 
         //When
-        Try<Integer> success = Try.with(() -> value);
+        Try<Integer> success = Try.with(ste);
 
         //Then
         assertTrue(success.isSuccess());
@@ -29,21 +31,22 @@ public class TrySpecs {
     }
 
     @Test
-    public void retrievesSuccessValueFromSupplierThrowingException() {
+    public void retrievesSuccessValueFromSupplierThrowingCheckedException() {
         //Given
         Integer value = 2;
+        SupplierThrowsException<Integer, Exception> ste = () -> value;
 
         //When
-        Try<Integer> success = Try.with(() -> value);
+        Try<Integer> success = Try.with(ste);
 
         //Then
         assertEquals(value, success.get());
     }
 
     @Test
-    public void failureCreatedWhenSupplierThrowsException() {
+    public void failureCreatedWhenSupplierThrowsUncheckedException() {
         //Given-When
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //Then
         assertTrue(failure.isFailure());
@@ -52,7 +55,7 @@ public class TrySpecs {
     @Test
     public void shoutsWhenRetrievingValueFromFailureFromSupplierThrowingException() {
         //Given-When
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //Then
         try {
@@ -88,6 +91,25 @@ public class TrySpecs {
 
         //Then
         assertEquals(value.toUpperCase(), success.get());
+    }
+
+    @Test
+    public void successCreatedFromFunctionThrowingUncheckedException() {
+        //Given
+        String value = "Hello";
+        Function<String, String> capitalize = s -> {
+            if (null == s)
+                throw new IllegalArgumentException("empty string");
+
+            return s.toUpperCase();
+        };
+
+        //When
+        Try<String> success = Try.with(capitalize, value);
+
+        //Then
+        assertTrue(success.isSuccess());
+        assertFalse(success.isFailure());
     }
 
     @Test
@@ -127,6 +149,29 @@ public class TrySpecs {
         //Then
         assertEquals(null, success.get());
     }
+
+    @Test
+    public void successCreatedFromConsumerThrowingUncheckedException() {
+        //Given
+        final String value = "Hello";
+        final StringBuilder result = new StringBuilder();
+        Consumer<String> consumer =
+                s -> {
+                    if (null == s)
+                        throw new IllegalArgumentException("null received");
+
+                    result.append(s);
+                };
+
+        //When
+        Try<Void> success = Try.with(consumer, value);
+
+        //Then
+        assertTrue(success.isSuccess());
+        assertFalse(success.isFailure());
+        assertEquals(value, result.toString());
+    }
+
 
     @Test
     public void failureCreatedWhenConsumerThrowsException() {
@@ -182,6 +227,26 @@ public class TrySpecs {
     }
 
     @Test
+    public void successCreatedFromPredicateThrowingUncheckedException() {
+        //Given
+        final String value = "Hello";
+        Predicate<String> pte = s -> {
+            if (null == s)
+                throw new IllegalArgumentException("empty string");
+
+            return s.length() >= 5;
+        };
+
+        //When
+        Try<String> success = Try.with(pte, value);
+
+        //Then
+        assertTrue(success.isSuccess());
+        assertFalse(success.isFailure());
+    }
+
+
+    @Test
     public void convertsSuccessToString() {
         //Given
         PredicateThrowsException<String, Exception> pte = s -> TrySpecsUtil.gte5(s);
@@ -196,10 +261,10 @@ public class TrySpecs {
     @Test
     public void convertsFailureToString() {
         //Given-When
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //Then
-        final ArithmeticException arithmeticException = new ArithmeticException("/ by zero");
+        ArithmeticException arithmeticException = new ArithmeticException("/ by zero");
         assertEquals(String.format("Failure(%s)", arithmeticException), failure.toString());
     }
 
@@ -207,7 +272,7 @@ public class TrySpecs {
     public void successMapsToSuccess() {
         //Given
         String value = "Hello";
-        FunctionThrowsException<String, String, Exception> fte = s -> TrySpecsUtil.capitalize(s);
+        Function<String, String> fte = String::toUpperCase;
         Try<String> success = Try.with(fte, value);
 
         //When
@@ -220,10 +285,11 @@ public class TrySpecs {
     @Test
     public void successMapsToFailure() {
         //Given
-        Try<String> success = Try.with(() -> null);
+        Supplier<String> empty = () -> null;
+        Try<String> success = Try.with(empty);
 
         //When
-        Try<Integer> mappedFailure = success.map(TrySpecsUtil::length);
+        Try<Integer> mappedFailure = success.map(String::length);
 
         //Then
         assertTrue(mappedFailure.isFailure());
@@ -232,8 +298,9 @@ public class TrySpecs {
     @Test
     public void failureMapsToFailure() {
         //Given
-        String nothing = null;
-        Try<Integer> failure = Try.with(() -> nothing.length());
+        final String nothing = null;
+        Supplier<Integer> empty = () -> nothing.length();
+        Try<Integer> failure = Try.with(empty);
 
         //When
         Try<Integer> mappedFailure = failure.map(len -> len * 2);
@@ -245,7 +312,8 @@ public class TrySpecs {
     @Test
     public void filtersSuccessWhenPredicateHolds() {
         //Given
-        Try<Integer> success = Try.with(() -> 2);
+        Supplier<Integer> supplier = () -> 2;
+        Try<Integer> success = Try.with(supplier);
 
         //When
         Try<Integer> filtered = success.filter(x -> true);
@@ -257,7 +325,8 @@ public class TrySpecs {
     @Test
     public void successConvertsToFailureWhenPredicateDoesNotHold() {
         //Given
-        Try<Integer> success = Try.with(() -> 2);
+        Supplier<Integer> supplier = () -> 2;
+        Try<Integer> success = Try.with(supplier);
 
         //When
         Try<Integer> filtered = success.filter(x -> false);
@@ -268,7 +337,7 @@ public class TrySpecs {
     @Test
     public void filteringFailureAlwaysResultsInFailure() {
         //Given-When
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //When
         Try<Integer> predicateHolds = failure.filter(x -> true);
@@ -281,8 +350,9 @@ public class TrySpecs {
     @Test
     public void successFlattensToSuccess() {
         //Given
-        String value = "Hello";
-        Try<String> success = Try.with(() -> value);
+        final String value = "Hello";
+        Supplier<String> supplier = () -> value;
+        Try<String> success = Try.with(supplier);
 
         //When
         final String prefix = "=> ";
@@ -295,7 +365,8 @@ public class TrySpecs {
     @Test
     public void successFlattensToFailure() {
         //Given
-        Try<String> success = Try.with(() -> "Hello");
+        Supplier<String> supplier = () -> "Hello";
+        Try<String> success = Try.with(supplier);
 
         //When
         final String prefix = null;
@@ -308,7 +379,9 @@ public class TrySpecs {
     @Test
     public void failureFlattensToFailure() {
         //Given
-        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
+        SupplierThrowsException<String, Exception> supplier =
+                () -> TrySpecsUtil.methodAlwaysThrows();
+        Try<String> failure = Try.with(supplier);
 
         //When
         Try<String> flattened = failure.flatMap(s -> TrySpecsUtil.prefixCapitalize("=> ", s));
@@ -321,7 +394,8 @@ public class TrySpecs {
     public void consumesSuccessValue() {
         //Given
         String value = "Hello";
-        Try<String> success = Try.with(() -> value);
+        Supplier<String> supplier = () -> value;
+        Try<String> success = Try.with(supplier);
 
         //When
         StringBuilder result = new StringBuilder();
@@ -334,7 +408,8 @@ public class TrySpecs {
     @Test
     public void doesNotConsumeFailure() {
         //Given
-        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
+        SupplierThrowsException<String, Exception> ste = () -> TrySpecsUtil.methodAlwaysThrows();
+        Try<String> failure = Try.with(ste);
 
         //When
         StringBuilder result = new StringBuilder();
@@ -348,7 +423,8 @@ public class TrySpecs {
     public void successConvertsToOptionalWithValue() {
         //Given
         String value = "Hello";
-        Try<String> success = Try.with(() -> value);
+        Supplier<String> supplier = () -> value;
+        Try<String> success = Try.with(supplier);
 
         //When
         final Optional<String> optional = success.toOptional();
@@ -361,7 +437,8 @@ public class TrySpecs {
     @Test
     public void failureConvertsToEmptyOptional() {
         //Given
-        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
+        SupplierThrowsException<String, Exception> ste = () -> TrySpecsUtil.methodAlwaysThrows();
+        Try<String> failure = Try.with(ste);
 
         //When
         Optional<String> optional = failure.toOptional();
@@ -373,7 +450,8 @@ public class TrySpecs {
     @Test
     public void recoversFromFailure() {
         //Given
-        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
+        SupplierThrowsException<String, Exception> ste = () -> TrySpecsUtil.methodAlwaysThrows();
+        Try<String> failure = Try.with(ste);
 
         //When
         String value = "";
@@ -387,7 +465,8 @@ public class TrySpecs {
     @Test
     public void successDoesNotRecover() {
         //Given
-        Try<Double> success = Try.with(() -> 8d / 3);
+        Supplier<Double> division = () -> 8d / 3;
+        Try<Double> success = Try.with(division);
 
         //When
         Try<Double> success2 = success.recover(t -> Double.NaN);
@@ -400,12 +479,13 @@ public class TrySpecs {
     @Test
     public void flattenedRecoveryFromFailure() {
         //Given
-        Try<String> failure = Try.with(() -> TrySpecsUtil.methodAlwaysThrows());
-        assertTrue(failure.isFailure());
+        SupplierThrowsException<String, Exception> ste = () -> TrySpecsUtil.methodAlwaysThrows();
+        Try<String> failure = Try.with(ste);
 
         //When
         String value = "";
-        Try<String> flattenedRecovery = failure.recoverWith(t -> Try.with(() -> value));
+        Supplier<String> supplier = () -> value;
+        Try<String> flattenedRecovery = failure.recoverWith(t -> Try.with(supplier));
 
         //Then
         assertTrue(flattenedRecovery.isSuccess());
@@ -415,10 +495,12 @@ public class TrySpecs {
     @Test
     public void successDoesNotRecoverAfterFlattening() {
         //Given
-        Try<Double> success = Try.with(() -> 8d / 3);
+        Supplier<Double> division = () -> 8d / 3;
+        Try<Double> success = Try.with(division);
 
         //When
-        Try<Double> success2 = success.recoverWith(t -> Try.with(() -> Double.NaN));
+        Supplier<Double> defaultSupplier = () -> Double.NaN;
+        Try<Double> success2 = success.recoverWith(t -> Try.with(defaultSupplier));
 
         //Then
         assertTrue(success2.isSuccess());
@@ -428,7 +510,8 @@ public class TrySpecs {
     @Test
     public void failsASuccess() {
         //Given
-        Try<Double> success = Try.with(() -> 8d / 3);
+        Supplier<Double> division = () -> 8d / 3;
+        Try<Double> success = Try.with(division);
 
         //When
         Try<Double> failed = success.failed();
@@ -440,7 +523,7 @@ public class TrySpecs {
     @Test
     public void succeedsAFailure() {
         //Given
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //When
         Try<Integer> success = failure.failed();
@@ -452,11 +535,12 @@ public class TrySpecs {
     @Test
     public void transformsASuccess() {
         //Given
-        Try<Integer> success = Try.with(() -> 8 / 2);
+        Supplier<Double> division = () -> 8d / 2;
+        Try<Double> success = Try.with(division);
 
-        Function<Integer, Try<Double>> successFn = x -> Try.with(() -> x * 2.0);
+        Function<Double, Try<Double>> successFn = x -> Try.with((Supplier<Double>) () -> x * 2.0);
 
-        Function<Throwable, Try<Double>> failureFn = t -> Try.with(() -> Double.NaN);
+        Function<Throwable, Try<Double>> failureFn = t -> Try.with((Supplier<Double>) () -> Double.NaN);
 
         //When
         Try<Double> transformed = success.transform(successFn, failureFn);
@@ -468,11 +552,11 @@ public class TrySpecs {
     @Test
     public void transformsAFailure() {
         //Given
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
-        Function<Integer, Try<Double>> successFn = x -> Try.with(() -> x * 2.0);
+        Function<Integer, Try<Double>> successFn = x -> Try.with((Supplier<Double>) () -> x * 2.0);
 
-        Function<Throwable, Try<Double>> failureFn = t -> Try.with(() -> Double.NaN);
+        Function<Throwable, Try<Double>> failureFn = t -> Try.with((Supplier<Double>) () -> Double.NaN);
 
         //When
         Try<Double> transformed = failure.transform(successFn, failureFn);
@@ -484,7 +568,7 @@ public class TrySpecs {
     @Test
     public void failureDefaultsToAValue() {
         //Given
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //When
         final int defaultValue = 2;
@@ -497,7 +581,7 @@ public class TrySpecs {
     @Test
     public void successDoesNotDefaultToAValue() {
         //Given
-        Try<Integer> success = Try.with(() -> 2 / 2);
+        Try<Integer> success = Try.with((Supplier<Integer>) () -> 2 / 2);
 
         //When
         final int defaultValue = 2;
@@ -511,13 +595,42 @@ public class TrySpecs {
     @Test
     public void failureDefaultsToAnotherTry() {
         //Given
-        Try<Integer> failure = Try.with(() -> 2 / 0);
+        Try<Integer> failure = Try.with(divisionByZero);
 
         //When
-        Try<Integer> defaultValue = failure.orElse(Try.with(() -> 2 / 1));
+        Try<Integer> defaultValue = failure.orElse(Try.with((Supplier<Integer>) () -> 2 / 1));
 
         //Then
         assertEquals(2, defaultValue.get().intValue());
+    }
+
+    @Test
+    public void flattensANestedSuccess() {
+        //Given
+        Try<Integer> success = Try.with((Supplier<Integer>) () -> 8 / 2);
+        Try<Try<Integer>> nestedSuccess = Try.with((Supplier<Try<Integer>>) () -> success);
+
+        //When
+        Try<Integer> flattenedSuccess = nestedSuccess.flatten();
+
+        //Then
+        assertEquals(success.get(), flattenedSuccess.get());
+
+    }
+
+    @Test
+    public void flattensANestedFailure() {
+        //Given
+        
+        Try<Integer> failure = Try.with(divisionByZero);
+        Try<Try<Integer>> nestedFailure = Try.with((Supplier<Try<Integer>>) () -> failure);
+
+        //When
+        Try<Integer> flattenedFailure = nestedFailure.flatten();
+
+
+        //Then
+        assertEquals(failure.get(), flattenedFailure.get());
     }
 }
 

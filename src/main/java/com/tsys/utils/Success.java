@@ -52,9 +52,9 @@ public class Success<T> implements Try<T> {
     }
 
     @Override
-    public <R> Try<R> transform(Function<T, Try<R>> successFn, Function<Throwable, Try<R>> failureFn) {
+    public <R> Try<R> transform(Function<T, Try<R>> s, Function<Throwable, Try<R>> fn) {
         try {
-            return successFn.apply(value);
+            return s.apply(value);
         } catch (Throwable t) {
             return new Failure(t);
         }
@@ -66,8 +66,18 @@ public class Success<T> implements Try<T> {
     }
 
     @Override
+    public <R extends Try<?>> R flatten() {
+        if (value instanceof Try) {
+            return (R) value;
+        }
+        throw new UnsupportedOperationException("flattening on " + value.getClass().getName());
+    }
+
+
+    @Override
     public <R> Try<R> map(Function<? super T, ? extends R> mapper) {
         Objects.requireNonNull(mapper);
+//        return Try.with(mapper, value);
         try { return new Success<>(mapper.apply(value)); }
         catch (Throwable t) { return new Failure(t); }
     }

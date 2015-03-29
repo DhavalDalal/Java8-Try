@@ -50,9 +50,9 @@ public class Failure<T extends Throwable> implements Try<T> {
     }
 
     @Override
-    public <R> Try<R> transform(Function<T, Try<R>> successFn, Function<Throwable, Try<R>> failureFn) {
+    public<R> Try<R> transform(Function<T, Try<R>> s, Function<Throwable, Try<R>> fn) {
         try {
-            return failureFn.apply(throwable);
+            return fn.apply(throwable);
         } catch (Throwable t) {
             return new Failure(t);
         }
@@ -61,6 +61,14 @@ public class Failure<T extends Throwable> implements Try<T> {
     @Override
     public Try<T> failed() {
         return new Success(throwable);
+    }
+
+    @Override
+    public <R extends Try<?>> R flatten() {
+        if (throwable instanceof Try) {
+            return (R) throwable;
+        }
+        throw new UnsupportedOperationException("flattening on " + throwable.getClass().getName());
     }
 
     @Override

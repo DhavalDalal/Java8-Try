@@ -3,9 +3,7 @@ package com.tsys.utils;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  *
@@ -132,7 +130,7 @@ public interface Try<T> {
      * Completes this `Try` by applying the function `fn` to this if this
      * is of type `Failure`, or conversely, by applying `s` if this is a `Success`.
      */
-    public<R> Try<R> transform(Function<T, Try<R>> successFn, Function<Throwable, Try<R>> failureFn);
+    public<R> Try<R> transform(Function<T, Try<R>> s, Function<Throwable, Try<R>> fn);
 
     /**
      * Completes this `Try` with an exception wrapped in a `Success`. The
@@ -146,15 +144,17 @@ public interface Try<T> {
      * value if this is a `Success`.
      */
     default Optional<T> toOptional() {
-        if (isSuccess()) {
-            return Optional.of(get());
-        } else {
-            return Optional.empty();
-        }
+        return isSuccess() ? Optional.of(get()) : Optional.empty();
     }
 
     /**
-     * Constructs a `Try` using a function that throws checked or unchecked exception.
+     * Transforms a nested `Try`, ie, a `Try` of type `Try<Try<T>>`,
+     * into an un-nested `Try`, ie, a `Try` of type `Try<T>`.
+     */
+    public <R extends Try<?>> R flatten();
+
+    /**
+     * Constructs a `Try` using a function that throws checked exception.
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
@@ -165,7 +165,18 @@ public interface Try<T> {
     }
 
     /**
-     * Constructs a `Try` using a supplier that throws checked or unchecked exception.
+     * Constructs a `Try` using a function that throws unchecked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T, R> Try<R> with(Function<T, R> fn, T t) {
+        Objects.requireNonNull(fn);
+        try { return new Success<>(fn.apply(t)); }
+        catch(Throwable e) { return new Failure(e); }
+    }
+
+    /**
+     * Constructs a `Try` using a supplier that throws checked exception.
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
@@ -176,7 +187,18 @@ public interface Try<T> {
     }
 
     /**
-     * Constructs a `Try` using a predicate that throws checked or unchecked exception.
+     * Constructs a `Try` using a supplier that throws unchecked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T> Try<T> with(Supplier<T> supplier) {
+        Objects.requireNonNull(supplier);
+        try { return new Success<>(supplier.get()); }
+        catch(Throwable e) { return new Failure(e); }
+    }
+
+    /**
+     * Constructs a `Try` using a predicate that throws checked exception.
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
@@ -190,9 +212,24 @@ public interface Try<T> {
         }
     }
 
+    /**
+     * Constructs a `Try` using a predicate that throws unchecked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T> Try<T> with(Predicate<T> predicate, T t) {
+        Objects.requireNonNull(predicate);
+        try {
+            return predicate.test(t) ? new Success<>(t)
+                    : new Failure(new NoSuchElementException("predicate does not hold"));
+        } catch (Throwable e) {
+            return new Failure(e);
+        }
+    }
+
 
     /**
-     * Constructs a `Try` using a consumer that throws checked or unchecked exception.
+     * Constructs a `Try` using a consumer that throws checked exception.
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
@@ -206,15 +243,40 @@ public interface Try<T> {
         }
     }
 
+    /**
+     * Constructs a `Try` using a consumer that throws unchecked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T> Try<Void> with(Consumer<T> consumer, T t) {
+        Objects.requireNonNull(consumer);
+        try {
+            consumer.accept(t);
+            return new Success<>(null);
+        } catch (Throwable e) {
+            return new Failure(e);
+        }
+    }
 
     /**
-     * Constructs a `Try` using a Bi-function that throws checked or unchecked exception.
+     * Constructs a `Try` using a Bi-function that throws checked exception.
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
     public static<T, U, R, E extends Throwable> Try<R> with(BiFunctionThrowsException<T, U, R, E> bfte, T t, U u) {
         Objects.requireNonNull(bfte);
         try { return new Success<>(bfte.apply(t, u)); }
+        catch(Throwable e) { return new Failure(e); }
+    }
+
+    /**
+     * Constructs a `Try` using a Bi-function that throws unchecked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T, U, R> Try<R> with(BiFunction<T, U, R> biFn, T t, U u) {
+        Objects.requireNonNull(biFn);
+        try { return new Success<>(biFn.apply(t, u)); }
         catch(Throwable e) { return new Failure(e); }
     }
 
