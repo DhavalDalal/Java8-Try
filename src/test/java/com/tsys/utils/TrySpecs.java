@@ -126,12 +126,11 @@ public class TrySpecs {
             };
 
         //When
-        Try<Void> success = Try.with(cte, value);
+        Try<String> success = Try.with(cte, value);
 
         //Then
         assertTrue(success.isSuccess());
-        assertFalse(success.isFailure());
-        assertEquals(value, result.toString());
+        assertEquals(value, success.get());
     }
 
     @Test
@@ -142,12 +141,13 @@ public class TrySpecs {
                     if (null == s)
                         throw new Exception("null received");
                 };
+        final String value = "Hello";
 
         //When
-        Try<Void> success = Try.with(cte, "Hello");
+        Try<String> success = Try.with(cte, value);
 
         //Then
-        assertEquals(null, success.get());
+        assertEquals(value, success.get());
     }
 
     @Test
@@ -164,14 +164,12 @@ public class TrySpecs {
                 };
 
         //When
-        Try<Void> success = Try.with(consumer, value);
+        Try<String> success = Try.with(consumer, value);
 
         //Then
         assertTrue(success.isSuccess());
-        assertFalse(success.isFailure());
-        assertEquals(value, result.toString());
+        assertEquals(value, success.get());
     }
-
 
     @Test
     public void failureCreatedWhenConsumerThrowsException() {
@@ -180,7 +178,7 @@ public class TrySpecs {
                 s -> { throw new Exception("on purpose"); };
 
         //When
-        Try<Void> failure = Try.with(cte, "Hello");
+        Try<String> failure = Try.with(cte, "Hello");
 
         //Then
         assertTrue(failure.isFailure());
@@ -630,7 +628,7 @@ public class TrySpecs {
 
 
         //Then
-        assertEquals(failure.get(), flattenedFailure.get());
+        assertTrue(flattenedFailure.isFailure());
     }
 }
 

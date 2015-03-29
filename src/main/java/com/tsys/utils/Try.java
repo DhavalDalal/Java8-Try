@@ -233,11 +233,11 @@ public interface Try<T> {
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
-    public static<T, E extends Throwable> Try<Void> with(ConsumerThrowsException<T, E> cte, T t) {
+    public static<T, E extends Throwable> Try<T> with(ConsumerThrowsException<T, E> cte, T t) {
         Objects.requireNonNull(cte);
         try {
             cte.accept(t);
-            return new Success<>(null);
+            return new Success<>(t);
         } catch (Throwable e) {
             return new Failure(e);
         }
@@ -248,11 +248,11 @@ public interface Try<T> {
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
      */
-    public static<T> Try<Void> with(Consumer<T> consumer, T t) {
+    public static<T> Try<T> with(Consumer<T> consumer, T t) {
         Objects.requireNonNull(consumer);
         try {
             consumer.accept(t);
-            return new Success<>(null);
+            return new Success<>(t);
         } catch (Throwable e) {
             return new Failure(e);
         }
