@@ -154,28 +154,6 @@ public interface Try<T> {
     public <R extends Try<?>> R flatten();
 
     /**
-     * Constructs a `Try` using a function that throws checked exception.
-     * This method will ensure any non-fatal exception is caught and a `Failure` object
-     * is returned.
-     */
-    public static<T, R, E extends Throwable> Try<R> with(FunctionThrowsException<T, R, E> fte, T t) {
-        Objects.requireNonNull(fte);
-        try { return new Success<>(fte.apply(t)); }
-        catch(Throwable e) { return new Failure(e); }
-    }
-
-    /**
-     * Constructs a `Try` using a function that throws unchecked exception.
-     * This method will ensure any non-fatal exception is caught and a `Failure` object
-     * is returned.
-     */
-    public static<T, R> Try<R> with(Function<T, R> fn, T t) {
-        Objects.requireNonNull(fn);
-        try { return new Success<>(fn.apply(t)); }
-        catch(Throwable e) { return new Failure(e); }
-    }
-
-    /**
      * Constructs a `Try` using a supplier that throws checked exception.
      * This method will ensure any non-fatal exception is caught and a `Failure` object
      * is returned.
@@ -196,6 +174,29 @@ public interface Try<T> {
         try { return new Success<>(supplier.get()); }
         catch(Throwable e) { return new Failure(e); }
     }
+
+
+    /**
+     * Constructs a `Try` using a function that throws checked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T, R, E extends Throwable> Try<R> with(FunctionThrowsException<T, R, E> fte, T t) {
+        Objects.requireNonNull(fte);
+        SupplierThrowsException<R, E> ste = () -> fte.apply(t);
+        return Try.with(ste);
+    }
+
+    /**
+     * Constructs a `Try` using a function that throws unchecked exception.
+     * This method will ensure any non-fatal exception is caught and a `Failure` object
+     * is returned.
+     */
+    public static<T, R> Try<R> with(Function<T, R> fn, T t) {
+        Objects.requireNonNull(fn);
+        return Try.with((Supplier<R>) () -> fn.apply(t));
+    }
+
 
     /**
      * Constructs a `Try` using a predicate that throws checked exception.
@@ -265,8 +266,8 @@ public interface Try<T> {
      */
     public static<T, U, R, E extends Throwable> Try<R> with(BiFunctionThrowsException<T, U, R, E> bfte, T t, U u) {
         Objects.requireNonNull(bfte);
-        try { return new Success<>(bfte.apply(t, u)); }
-        catch(Throwable e) { return new Failure(e); }
+        SupplierThrowsException<R, E> ste = () -> bfte.apply(t, u);
+        return Try.with(ste);
     }
 
     /**
@@ -276,8 +277,7 @@ public interface Try<T> {
      */
     public static<T, U, R> Try<R> with(BiFunction<T, U, R> biFn, T t, U u) {
         Objects.requireNonNull(biFn);
-        try { return new Success<>(biFn.apply(t, u)); }
-        catch(Throwable e) { return new Failure(e); }
+        return Try.with((Supplier<R>) () -> biFn.apply(t, u));
     }
 
     /**
