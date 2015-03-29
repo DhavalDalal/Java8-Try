@@ -171,8 +171,8 @@ public interface Try<T> {
      */
     public static<T> Try<T> with(Supplier<T> supplier) {
         Objects.requireNonNull(supplier);
-        try { return new Success<>(supplier.get()); }
-        catch(Throwable e) { return new Failure(e); }
+        SupplierThrowsException<T, Throwable> ste = () -> supplier.get();
+        return Try.with(ste);
     }
 
 
@@ -236,12 +236,11 @@ public interface Try<T> {
      */
     public static<T, E extends Throwable> Try<T> with(ConsumerThrowsException<T, E> cte, T t) {
         Objects.requireNonNull(cte);
-        try {
+        SupplierThrowsException<T, E> ste = () -> {
             cte.accept(t);
-            return new Success<>(t);
-        } catch (Throwable e) {
-            return new Failure(e);
-        }
+            return t;
+        };
+        return Try.with(ste);
     }
 
     /**
@@ -251,12 +250,11 @@ public interface Try<T> {
      */
     public static<T> Try<T> with(Consumer<T> consumer, T t) {
         Objects.requireNonNull(consumer);
-        try {
+        Supplier<T> supplier = () -> {
             consumer.accept(t);
-            return new Success<>(t);
-        } catch (Throwable e) {
-            return new Failure(e);
-        }
+            return t;
+        };
+        return Try.with(supplier);
     }
 
     /**
