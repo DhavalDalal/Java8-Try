@@ -5,10 +5,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class Failure<T extends Throwable> implements Try<T> {
-    private final T throwable;
+public class Failure<T> extends Try<T> {
+    private final Throwable throwable;
 
-    public Failure(final T throwable) {
+    public Failure(final Throwable throwable) {
         this.throwable = throwable;
     }
 
@@ -19,7 +19,9 @@ public class Failure<T extends Throwable> implements Try<T> {
     public boolean isFailure() { return true;  }
 
     @Override
-    public T get() { throw new RuntimeException(throwable); }
+    public T get() {
+        throw new RuntimeException(throwable);
+    }
 
     @Override
     public void forEach(Consumer<? super T> fn) { }
@@ -35,7 +37,7 @@ public class Failure<T extends Throwable> implements Try<T> {
         try {
             return new Success<>(fn.apply(throwable));
         } catch (Throwable t) {
-            return new Failure(t);
+            return rethrowIfFatal(t);
         }
     }
 
@@ -45,7 +47,7 @@ public class Failure<T extends Throwable> implements Try<T> {
         try {
             return fn.apply(throwable);
         } catch (Throwable t) {
-            return new Failure(t);
+            return rethrowIfFatal(t);
         }
     }
 
@@ -54,7 +56,7 @@ public class Failure<T extends Throwable> implements Try<T> {
         try {
             return fn.apply(throwable);
         } catch (Throwable t) {
-            return new Failure(t);
+            return rethrowIfFatal(t);
         }
     }
 
@@ -65,10 +67,7 @@ public class Failure<T extends Throwable> implements Try<T> {
 
     @Override
     public <R extends Try<?>> R flatten() {
-        if (throwable instanceof Try) {
-            return (R) throwable;
-        }
-        throw new UnsupportedOperationException("flattening on " + throwable.getClass().getName());
+        return (R) this;
     }
 
     @Override

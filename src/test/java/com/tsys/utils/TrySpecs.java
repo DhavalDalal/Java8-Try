@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.zip.ZipError;
 
 import static org.junit.Assert.*;
 
@@ -613,22 +614,32 @@ public class TrySpecs {
 
         //Then
         assertEquals(success.get(), flattenedSuccess.get());
-
     }
 
     @Test
     public void flattensANestedFailure() {
         //Given
-        
         Try<Integer> failure = Try.with(divisionByZero);
         Try<Try<Integer>> nestedFailure = Try.with((Supplier<Try<Integer>>) () -> failure);
 
         //When
         Try<Integer> flattenedFailure = nestedFailure.flatten();
 
-
         //Then
         assertTrue(flattenedFailure.isFailure());
+    }
+
+    @Test
+    public void classifiesFatalExceptions() {
+        assertTrue(Try.fatal(new ThreadDeath()));
+        assertTrue(Try.fatal(new InterruptedException()));
+        assertTrue(Try.fatal(new LinkageError()));
+        assertTrue(Try.fatal(new InternalError()));
+        assertTrue(Try.fatal(new OutOfMemoryError()));
+        assertTrue(Try.fatal(new UnknownError()));
+        assertTrue(Try.fatal(new ZipError("")));
+
+        assertFalse(Try.fatal(new StackOverflowError()));
     }
 }
 

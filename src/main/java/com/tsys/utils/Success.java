@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class Success<T> implements Try<T> {
+public class Success<T> extends Try<T> {
     private final T value;
 
     public Success(final T value) {
@@ -35,9 +35,9 @@ public class Success<T> implements Try<T> {
             if (predicate.test(value))
                 return this;
             else
-                return new Failure(new NoSuchElementException("predicate does not hold"));
+                return new Failure<>(new NoSuchElementException("predicate does not hold"));
         } catch (Throwable t) {
-            return new Failure(t);
+            return rethrowIfFatal(t);
         }
     }
 
@@ -56,37 +56,33 @@ public class Success<T> implements Try<T> {
         try {
             return s.apply(value);
         } catch (Throwable t) {
-            return new Failure(t);
+            return rethrowIfFatal(t);
         }
     }
 
     @Override
     public Try<T> failed() {
-        return new Failure(new UnsupportedOperationException("Success failed"));
+        return new Failure<>(new UnsupportedOperationException("Success failed"));
     }
 
     @Override
     public <R extends Try<?>> R flatten() {
-        if (value instanceof Try) {
-            return (R) value;
-        }
-        throw new UnsupportedOperationException("flattening on " + value.getClass().getName());
+        return (R) value;
     }
-
 
     @Override
     public <R> Try<R> map(Function<? super T, ? extends R> mapper) {
         Objects.requireNonNull(mapper);
 //        return Try.with(mapper, value);
         try { return new Success<>(mapper.apply(value)); }
-        catch (Throwable t) { return new Failure(t); }
+        catch (Throwable t) { return rethrowIfFatal(t); }
     }
 
     @Override
     public <R> Try<R> flatMap(Function<? super T, Try<R>> mapper) {
         Objects.requireNonNull(mapper);
         try { return mapper.apply(value); }
-        catch(Throwable t) { return new Failure(t); }
+        catch(Throwable t) { return rethrowIfFatal(t); }
     }
 
     @Override
