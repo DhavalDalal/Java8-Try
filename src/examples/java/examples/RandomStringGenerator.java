@@ -77,4 +77,9 @@ public class RandomStringGenerator {
                 .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
                 .toString();
     }
+
+    public static void main(String[] args) {
+        System.out.println("password(4, 8) = " + password(4, 8));
+        System.out.println("generate(2, 10) = " + generate(2, 10));
+    }
 }

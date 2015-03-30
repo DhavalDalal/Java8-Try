@@ -73,7 +73,6 @@ public class Success<T> extends Try<T> {
     @Override
     public <R> Try<R> map(Function<? super T, ? extends R> mapper) {
         Objects.requireNonNull(mapper);
-//        return Try.with(mapper, value);
         try { return new Success<>(mapper.apply(value)); }
         catch (Throwable t) { return rethrowIfFatal(t); }
     }
