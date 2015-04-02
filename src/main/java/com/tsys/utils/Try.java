@@ -18,21 +18,24 @@ import java.util.function.*;
  * Example:
  * {{{
  *
- * static Try<Integer> divide() {
- *   Console console = System.console();
- *   if (console == null) {
- *     return new Failure(new UnsupportedOperationException("Empty console"));
- *   }
- *   String numer = console.readLine("Enter an Int that you'd like to divide:\n");
- *   String denom = console.readLine("Enter an Int that you'd like to divide by:\n");
- *   FunctionThrowsException<String, Integer, NumberFormatException> toInteger =
- *       s -> Integer.parseInt(s);
+ * static String readKeyboard(String prompt) {
+ *   Scanner in = new Scanner(System.in);
+ *   System.out.print(prompt);
+ *   return in.nextLine();
+ * }
  *
+ * static Try<Integer> divide() {
+ *   String numer = readKeyboard("Enter an Int that you'd like to divide:");
+ *   String denom = readKeyboard("Enter an Int that you'd like to divide by:");
+ *
+ *   FunctionThrowsException<String, Integer, NumberFormatException> toInteger = s -> Integer.parseInt(s);
  *   Try<Integer> dividend = Try.with(toInteger, numer);
  *   Try<Integer> divisor = Try.with(toInteger, denom);
- *   return dividend.flatMap(x -> divisor.map(y -> x/y))
+ *   return dividend.flatMap(x -> divisor.map(y -> x / y))
  *                  .recoverWith(t -> divide());
- *  }
+ * }
+ *
+ * divide().forEach(System.out::println);
  *
  * }}}
  *
