@@ -50,6 +50,13 @@ public class TryInCollectionExamples {
         return name.toString();
     }
 
+    static boolean gte5(String s) throws Exception {
+        if (null == s)
+            throw new Exception("null");
+
+        return s.length() >= 5;
+    }
+
 
     public static void main(String[] args) throws Exception {
         //Example: FunctionThrowingException, map
@@ -80,10 +87,10 @@ public class TryInCollectionExamples {
 
 
         //Example: PredicateThrowingException
-//        final List<String> filtered = Arrays.asList("Hello", null, "hi").stream()
-//                .filter(s -> Try.with(TrySpecsUtil::gte5).test(s))
-//                .collect(Collectors.toList());
-//        System.out.println("filtered = " + filtered);
+        final List<String> filtered = Arrays.asList("Hello", null, "hi").stream()
+                .filter(Try.with(TryInCollectionExamples::gte5))
+                .collect(Collectors.toList());
+        System.out.println("filtered = " + filtered);
 
     }
 }
