@@ -81,23 +81,5 @@ public class TryExample {
               events.add(new Event(type));
             }
         });
-
     }
 }
-
-
-class Sql {
-    static void execute(String dburl, String sql, ConsumerThrowsException<ResultSet, SQLException> consumer) {
-        try (Connection connection = DriverManager.getConnection(dburl)) {
-            try (Statement statement = connection.createStatement()) {
-                statement.execute(sql);
-                try (ResultSet resultSet = statement.getResultSet()) {
-                    consumer.accept(resultSet);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-}
-
