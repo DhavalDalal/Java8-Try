@@ -25,4 +25,4 @@ Please refer to `AppConfig.groovy` - a single place of change for all the projec
 ## Using Try<T> Examples
 
 * Refer to examples folder
-* Please refer to the following [presentation] (//http://dhavaldalal.github.io/Java8-Try/)
+* Please refer to the following [presentation] (http://dhavaldalal.github.io/Java8-Try/)
