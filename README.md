@@ -1,7 +1,7 @@
 # Java8 Try<T> 
 To wrap checked exceptions and to make failures explicit.  This is a translation
 of Scala's Try[T].  Basic api to do with container semantics like transformation, 
-filtering, flatMap and failure recovery and builing a recovery chain.
+filtering, flatMap and failure recovery and builing a recovery chain are present.
 
 
 ## Build Info
